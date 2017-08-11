@@ -1,4 +1,5 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.azarrias.simpleircserver</groupId>
   <artifactId>simpleircserver</artifactId>
@@ -7,13 +8,17 @@
   <description>Simple IRC Server</description>
   
   <dependencies>
- 
-  <dependency>
-    <groupId>io.netty</groupId>
-    <artifactId>netty-all</artifactId>
-    <version>4.1.14.Final</version>
-    <scope>compile</scope>
-  </dependency>
- 
-</dependencies>
+  	<dependency>
+    	<groupId>io.netty</groupId>
+    	<artifactId>netty-all</artifactId>
+    	<version>4.1.14.Final</version>
+    	<scope>compile</scope>
+  	</dependency>
+  </dependencies>
+  
+  <properties>
+  	<maven.compiler.source>1.8</maven.compiler.source>
+  	<maven.compiler.target>1.8</maven.compiler.target>
+  </properties>
+  
 </project>
