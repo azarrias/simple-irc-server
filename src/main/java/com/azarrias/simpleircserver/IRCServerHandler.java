@@ -59,6 +59,20 @@ public class IRCServerHandler extends SimpleChannelInboundHandler<String> {
         	else 
         		incoming.writeAndFlush("Invalid command.\r\n> ");
         	break;
+        case "/leave":
+        	if (tokens.length == 1){
+        		incoming.writeAndFlush("[" + IRC_USER + "] - Leaving... \r\n");
+        		ctx.close();
+        	}
+        	else
+        		incoming.writeAndFlush("Invalid command.\r\n> ");
+        	break;
+        case "/users":
+        	if (tokens.length == 1)
+        		showUsers(ctx);
+        	else
+        		incoming.writeAndFlush("Invalid command.\r\n> ");
+        	break;
         default:
         	incoming.writeAndFlush("Invalid command.\r\n> ");
         }
@@ -97,6 +111,24 @@ public class IRCServerHandler extends SimpleChannelInboundHandler<String> {
 		}
 		incoming.writeAndFlush("[" + IRC_USER + "] - Joined channel " + channelName + ".\r\n> ");	
 		ircChannels.put(incoming.id(), channelName);
+	}
+    
+	private void showUsers(ChannelHandlerContext ctx) {
+		Channel incoming = ctx.channel();
+		String channelName = ircChannels.get(incoming.id());
+		if(channelName != null) {
+			incoming.writeAndFlush("[" + IRC_USER + "] - Users in channel " + channelName + ".\r\n");
+			for (Channel c : channels) {
+				if(channelName.equals(ircChannels.get(c.id()))){
+					incoming.writeAndFlush(ircUsers.get(c.id()) + "\r\n");
+				}
+			}			
+		}
+		else{
+			incoming.writeAndFlush("[" + IRC_USER + "] - You are not in a channel.\r\n");
+		}
+
+		incoming.writeAndFlush("> "); 
 	}
 	
 	@Override
