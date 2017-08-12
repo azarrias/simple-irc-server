@@ -74,9 +74,23 @@ public class IRCServerHandler extends SimpleChannelInboundHandler<String> {
         		incoming.writeAndFlush("Invalid command.\r\n> ");
         	break;
         default:
-        	incoming.writeAndFlush("Invalid command.\r\n> ");
+        	sendMessage(ctx, str);
         }
     }
+
+	private void sendMessage(ChannelHandlerContext ctx, String str) {
+		Channel incoming = ctx.channel();
+		String channelName = ircChannels.get(incoming.id());
+		if(channelName != null){
+			for (Channel c : channels){
+				if(ircChannels.get(c.id()).equals(channelName) && !c.equals(incoming)){
+					c.writeAndFlush("[" + ircUsers.get(incoming.id()) + "] - " + str + "\r\n> ");
+				}
+			}
+		}
+		else
+			incoming.writeAndFlush("[" + IRC_USER + "] - You are not in a channel.\r\n> ");
+	}
 
 	private synchronized void login(ChannelHandlerContext ctx, String username, String password) {
     	Channel incoming = ctx.channel();
@@ -95,6 +109,7 @@ public class IRCServerHandler extends SimpleChannelInboundHandler<String> {
     	}
     	
     	ircUsers.put(incoming.id(), username);
+    	ircChannels.remove(incoming.id());
 	}
 
     private synchronized void join(ChannelHandlerContext ctx, String channelName) {
