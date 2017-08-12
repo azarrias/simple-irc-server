@@ -1,28 +1,52 @@
 package com.azarrias.simpleircserver;
 
-import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
+import io.netty.util.concurrent.DefaultEventExecutor;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.channel.group.ChannelGroup;
+import io.netty.channel.group.DefaultChannelGroup;
 
 /**
  * Handles a server-side channel.
  */
-public class IRCServerHandler extends ChannelInboundHandlerAdapter { // (1)
+public class IRCServerHandler extends SimpleChannelInboundHandler<String> {
 
-	@Override
-	public void channelRead(ChannelHandlerContext ctx, Object msg) {
-	    ByteBuf in = (ByteBuf) msg;
-	    try {
-	    	System.out.print(in.toString(io.netty.util.CharsetUtil.UTF_8));
-	    } finally {
-	        in.release();
-	    }
-	}
+    private static final ChannelGroup channels = new DefaultChannelGroup(new DefaultEventExecutor());
 
     @Override
-    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) { // (4)
-        // Close the connection when an exception is raised.
+    public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
+        Channel incoming = ctx.channel();
+        incoming.writeAndFlush("[SERVER] - " + "Welcome to this IRC Server\r\n" + 
+        		"Command set:\r\n  /join name password\r\n  /join channel\r\n  /leave\r\n  /users\r\n> ");
+
+        channels.add(incoming);
+    }
+
+    @Override
+    public void handlerRemoved(ChannelHandlerContext ctx) throws Exception {
+        Channel incoming = ctx.channel();
+        
+        channels.remove(incoming);
+    }
+
+    @Override
+    protected void channelRead0(ChannelHandlerContext ctx, String s) throws Exception {
+        Channel incoming = ctx.channel();
+        for (Channel channel : channels) {
+            if (channel != incoming) {
+                channel.writeAndFlush("[other] " + s + "\r\n");
+            } else {
+                channel.writeAndFlush("[you] " + s + "\r\n");
+            }
+        }
+    }
+
+    @Override
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
+    	// Close the connection when an exception is raised.
         cause.printStackTrace();
         ctx.close();
     }
+
 }
