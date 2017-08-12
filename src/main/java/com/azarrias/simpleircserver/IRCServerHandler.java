@@ -21,7 +21,6 @@ public class IRCServerHandler extends SimpleChannelInboundHandler<String> {
 	private static final int LAST_N_MESSAGES = 5;
 	private static final ChannelGroup channels = new DefaultChannelGroup(new DefaultEventExecutor());
     private static ConcurrentMap<ChannelId, String> ircChannels = new ConcurrentHashMap<ChannelId, String>();
-    private static ConcurrentMap<String, Integer> ircUsersPerChannel = new ConcurrentHashMap<String, Integer>();
     private static ConcurrentMap<ChannelId, String> ircUsers = new ConcurrentHashMap<ChannelId, String>();
     private static ConcurrentMap<String, String> userProfiles = new ConcurrentHashMap<String, String>();
     
@@ -86,19 +85,18 @@ public class IRCServerHandler extends SimpleChannelInboundHandler<String> {
 
     private synchronized void join(ChannelHandlerContext ctx, String channelName) {
 		Channel incoming = ctx.channel();
-		if(ircUsersPerChannel.containsKey(channelName) && 
-				(ircUsersPerChannel.get(channelName) >= MAX_CLIENTS_PER_CHANNEL)){
-			incoming.writeAndFlush("[" + IRC_USER + "] - Channel " + channelName + " is currently full.\r\n> ");
-		}
-		else
+		// If the client's limit is not exceeded, join channel
+		int counter = 0;
+		for (String v : ircChannels.values())
 		{
-			if(!ircUsersPerChannel.containsKey(channelName)){
-				ircUsersPerChannel.put(channelName, 0);
+			if (channelName.equals(v) &&
+				++counter >= MAX_CLIENTS_PER_CHANNEL) {
+					incoming.writeAndFlush("[" + IRC_USER + "] - Channel " + channelName + " is currently full.\r\n> ");
+					return;
 			}
-			incoming.writeAndFlush("[" + IRC_USER + "] - Joined channel " + channelName + ".\r\n> ");	
-			ircUsersPerChannel.put(channelName, ircUsersPerChannel.get(channelName) + 1);
-			ircChannels.put(incoming.id(), channelName);
 		}
+		incoming.writeAndFlush("[" + IRC_USER + "] - Joined channel " + channelName + ".\r\n> ");	
+		ircChannels.put(incoming.id(), channelName);
 	}
 	
 	@Override
