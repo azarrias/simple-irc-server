@@ -99,6 +99,12 @@ public class IRCServerHandler extends SimpleChannelInboundHandler<String> {
 
     private synchronized void join(ChannelHandlerContext ctx, String channelName) {
 		Channel incoming = ctx.channel();
+		// Check if the user has logged in
+		if(!ircUsers.containsKey(incoming.id())){
+			incoming.writeAndFlush("[" + IRC_USER + "] - You are not logged in.\r\n> ");
+			return;
+		}
+		
 		// If the client's limit is not exceeded, join channel
 		int counter = 0;
 		for (String v : ircChannels.values())
