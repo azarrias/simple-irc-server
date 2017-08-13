@@ -130,15 +130,24 @@ public class IRCServerHandler extends SimpleChannelInboundHandler<String> {
 					return;
 			}
 		}
-		incoming.writeAndFlush("[" + IRC_USER + "] - Joined channel " + channelName + ".\r\n> ");	
+		
+		// If the user was previouly in a different channel notify leave
+		
+		// Join channel
+		incoming.writeAndFlush("[" + IRC_USER + "] - Joined channel " + channelName + ".\r\n> ");
 		ircChannels.put(incoming.id(), channelName);
+		for (Channel c : channels){
+			if(ircChannels.get(c.id()).equals(channelName) && !c.equals(incoming)){
+				c.writeAndFlush("[" + IRC_USER + "] - " + ircUsers.get(incoming.id()) + " has joined the channel.\r\n> ");
+			}
+		}
 	}
     
 	private void showUsers(ChannelHandlerContext ctx) {
 		Channel incoming = ctx.channel();
 		String channelName = ircChannels.get(incoming.id());
 		if(channelName != null) {
-			incoming.writeAndFlush("[" + IRC_USER + "] - Users in channel " + channelName + ".\r\n");
+			incoming.writeAndFlush("[" + IRC_USER + "] - List of users in channel " + channelName + ":\r\n");
 			for (Channel c : channels) {
 				if(channelName.equals(ircChannels.get(c.id()))){
 					incoming.writeAndFlush(ircUsers.get(c.id()) + "\r\n");
